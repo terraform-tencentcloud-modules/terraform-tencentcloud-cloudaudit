@@ -114,9 +114,33 @@ variable "force_clean" {
   default     = false
 }
 
+variable "versioning_enable" {
+  description = "Enable bucket versioning."
+  type        = bool
+  default     = false
+}
+
 variable "lifecycle_rules" {
   description = "Lifecycle rules to the bucket."
   default     = []
+}
+
+variable "log_enable" {
+  description = "Indicate the access log of this bucket to be saved or not."
+  type        = bool
+  default     = false
+}
+
+variable "log_prefix" {
+  description = "The prefix log name which saves the access log of this bucket per 5 minutes. Eg. MyLogPrefix/. The log access file format is log_target_bucket/log_prefix{YYYY}/{MM}/{DD}/{time}{random}{index}.gz. Only valid when log_enable is true."
+  type        = string
+  default     = ""
+}
+
+variable "log_target_bucket" {
+  description = "The target bucket name which saves the access log of this bucket per 5 minutes. The log access file format is log_target_bucket/log_prefix{YYYY}/{MM}/{DD}/{time}{random}{index}.gz. Only valid when log_enable is true. User must have full access on this bucket."
+  type        = string
+  default     = ""
 }
 
 variable "tags" {

@@ -12,21 +12,29 @@ provider "tencentcloud" {
   region = var.region
 }
 
-# It is recommended to use the COS module to create COS bucket.
+locals {
+  account_id = "your account id"
+  bucket_name = "your bucket name"
+  appid = "your appid"
+  bucket = "${local.bucket_name}-${local.appid}"
+}
 
 module "cloud_audit" {
   source = "../.."
 
   create_track = true
   create_bucket = true
+  create_bucket_policy = true
 
   track_name = "tfmodule_audit"
-  bucket_name = "tf-cos"
-  appid = "your appid"
+  bucket_name = local.bucket_name
+  appid = local.appid
   storage_prefix = "tfmodule"
   region = var.region
   
   force_clean = true
+  versioning_enable = true
+
   lifecycle_rules = [
     {
       filter_prefix = "tf"
@@ -36,6 +44,29 @@ module "cloud_audit" {
       }]
     }
   ]
+
+  policy = <<EOF
+    {
+      "version": "2.0",
+      "Statement": [
+        {
+          "Principal": {
+            "qcs": [
+              "qcs::cam::uin/${local.account_id}:uin/${local.account_id}"
+            ]
+          },
+          "Action": [
+            "name/cos:DeleteBucket",
+            "name/cos:PutBucketACL"
+          ],
+          "Effect": "allow",
+          "Resource": [
+            "qcs::cos:${var.region}:uid/${local.appid}:${local.bucket}/*"
+          ]
+        }
+      ]
+    }
+  EOF
 }
 ```
 
@@ -61,6 +92,10 @@ module "cloud_audit" {
 | acl_body | The XML format of Access control list for the bucket. | string | null | no |
 | encryption_algorithm | The server-side encryption algorithm to the bucket. | string | AES256 | no |
 | force_clean | Whether to force cleanup all objects before delete bucket. | bool | false | no |
+| versioning_enable | Enable bucket versioning. | bool | false | no |
+| log_enable | Indicate the access log of this bucket to be saved or not. | bool | false | no |
+| log_prefix | The prefix log name which saves the access log of this bucket per 5 minutes. Eg. MyLogPrefix/. The log access file format is log_target_bucket/log_prefix{YYYY}/{MM}/{DD}/{time}{random}{index}.gz. Only valid when log_enable is true." | string | "" | no |
+| log_target_bucket | The target bucket name which saves the access log of this bucket per 5 minutes. The log access file format is log_target_bucket/log_prefix{YYYY}/{MM}/{DD}/{time}{random}{index}.gz. Only valid when log_enable is true. User must have full access on this bucket.| string | "" | no |
 | lifecycle_rules | Lifecycle rules to the bucket. | list | [] | no |
 | tags | A mapping of tags to assign to the bucket. | map | {} | no |
 | policy | The text of the policy. | string | "" | no |
@@ -73,6 +108,7 @@ module "cloud_audit" {
 |------|-------------|
 | cloudaudit_id | The ID of Cloud Audit Track. | 
 | bucket_id | The ID of COS bucket. |
+| bucket_policy_id | The ID of COS bucket Policy. |
 
 ## Authors
 
