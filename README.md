@@ -20,7 +20,7 @@ locals {
 }
 
 module "cloud_audit" {
-  source = "../.."
+  source = "terraform-tencentcloud-modules/cloudaudit/tencentcloud"
 
   create_track = true
   create_bucket = true

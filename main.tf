@@ -11,9 +11,9 @@ data "tencentcloud_cam_policies" "default" {
 }
 
 resource "tencentcloud_cam_role" "default" {
-  count = length(data.tencentcloud_cam_roles.default.role_list) == 0 ? 1 : 0
-  name = "CloudAudit_QCSRole"
-  document = <<EOF
+  count         = length(data.tencentcloud_cam_roles.default.role_list) == 0 ? 1 : 0
+  name          = "CloudAudit_QCSRole"
+  document      = <<EOF
   {
     "version": "2.0",
     "statement": [
@@ -32,7 +32,7 @@ resource "tencentcloud_cam_role" "default" {
 }
 
 resource "tencentcloud_cam_role_policy_attachment" "default" {
-  count = length(data.tencentcloud_cam_roles.default.role_list) == 0 ? 1 : 0
+  count     = length(data.tencentcloud_cam_roles.default.role_list) == 0 ? 1 : 0
   role_id   = join(",", tencentcloud_cam_role.default.*.id)
   policy_id = data.tencentcloud_cam_policies.default.policy_list[0].policy_id
 }
@@ -40,20 +40,20 @@ resource "tencentcloud_cam_role_policy_attachment" "default" {
 resource "tencentcloud_audit_track" "cloudaudit" {
   count = var.create_track ? 1 : 0
 
-  name = var.track_name
-  action_type = var.action_type
-  event_names = var.event_names
+  name          = var.track_name
+  action_type   = var.action_type
+  event_names   = var.event_names
   resource_type = var.resource_type
-  status = var.status
+  status        = var.status
   storage {
-    storage_name = var.bucket_name
+    storage_name   = var.bucket_name
     storage_prefix = var.storage_prefix
     storage_region = var.region
-    storage_type = var.storage_type
+    storage_type   = var.storage_type
   }
   track_for_all_members = var.track_for_all_members
 
-  depends_on = [ 
+  depends_on = [
     tencentcloud_cos_bucket.cos,
     tencentcloud_cam_role.default,
     tencentcloud_cam_role_policy_attachment.default,
@@ -63,24 +63,24 @@ resource "tencentcloud_audit_track" "cloudaudit" {
 resource "tencentcloud_cos_bucket" "cos" {
   count = var.create_bucket ? 1 : 0
 
-  bucket   = local.bucket
-  acl      = var.bucket_acl
-  acl_body = var.acl_body
+  bucket               = local.bucket
+  acl                  = var.bucket_acl
+  acl_body             = var.acl_body
   encryption_algorithm = var.encryption_algorithm
   force_clean          = var.force_clean
-  versioning_enable = var.versioning_enable
+  versioning_enable    = var.versioning_enable
 
   dynamic "lifecycle_rules" {
     for_each = var.lifecycle_rules
     content {
       filter_prefix = lookup(lifecycle_rules.value, "filter_prefix", "")
-      id = lookup(lifecycle_rules.value, "id", "")
+      id            = lookup(lifecycle_rules.value, "id", "")
 
       dynamic "expiration" {
         for_each = lookup(lifecycle_rules.value, "expiration", [])
         content {
-          date = lookup(expiration.value, "date", null)
-          days = lookup(expiration.value, "days", null)
+          date          = lookup(expiration.value, "date", null)
+          days          = lookup(expiration.value, "days", null)
           delete_marker = lookup(expiration.value, "delete_marker", null)
         }
       }
@@ -106,7 +106,7 @@ resource "tencentcloud_cos_bucket" "cos" {
         for_each = lookup(lifecycle_rules.value, "non_current_transition", [])
         iterator = transition
         content {
-          storage_class = lookup(transition.value, "storage_class", null)
+          storage_class    = lookup(transition.value, "storage_class", null)
           non_current_days = lookup(transition.value, "non_current_days", null)
         }
       }
@@ -126,7 +126,7 @@ resource "tencentcloud_cos_bucket_policy" "cos_policy" {
   bucket = local.bucket
   policy = var.policy
 
-  depends_on = [ 
-    tencentcloud_cos_bucket.cos 
+  depends_on = [
+    tencentcloud_cos_bucket.cos
   ]
 }
